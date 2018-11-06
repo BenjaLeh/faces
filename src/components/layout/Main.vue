@@ -9,18 +9,19 @@
                 | {{ item.heading }}
             v-flex.text-xs-center(xs6)
               a.body-2.black--text(href='#!') EDIT
-          v-list-group(v-else-if='item.children', v-model='item.model', :key='item.text', :prepend-icon="item.model ? item.icon : item['icon-alt']", append-icon)
+          v-list-group(v-else-if='item.children', v-model='item.model', :key='item.text', 
+            :prepend-icon="item.model ? item.icon : item['icon-alt']", append-icon)
             v-list-tile(slot='activator')
               v-list-tile-content
                 v-list-tile-title
                   | {{ item.text }}
-            v-list-tile(v-for='(child, i) in item.children', :key='i', @click)
+            v-list-tile(v-for='(child, i) in item.children', :key='i', :to='item.href')
               v-list-tile-action(v-if='child.icon')
                 v-icon {{ child.icon }}
               v-list-tile-content
                 v-list-tile-title
                   | {{ child.text }}
-          v-list-tile(v-else, :key='item.text', @click)
+          v-list-tile(v-else, :key='item.text', :to='item.href')
             v-list-tile-action
               v-icon {{ item.icon }}
             v-list-tile-content
@@ -46,33 +47,12 @@
 </template>
 
 <script>
+  import config from '@/config'
   export default {
     data: () => ({
       dialog: false,
       drawer: null,
-      items: [
-        { icon: 'contacts', text: 'Contacts' },
-        {
-          icon: 'keyboard_arrow_up',
-          'icon-alt': 'keyboard_arrow_down',
-          text: 'Labels',
-          model: true,
-          children: [
-            { icon: 'add', text: 'Create label' }
-          ]
-        },
-        {
-          icon: 'keyboard_arrow_up',
-          'icon-alt': 'keyboard_arrow_down',
-          text: 'More',
-          model: false,
-          children: [
-            { text: 'Import' },
-            { text: 'Export' }
-          ]
-        },
-        { icon: 'settings', text: 'Settings' }
-      ]
+      items: config.menu
     }),
     props: {
       source: String

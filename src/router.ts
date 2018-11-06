@@ -25,8 +25,6 @@ export default new Router({
   ]
 })
 
-// https://blog.rapidapi.com/top-facial-recognition-apis/
-
 /**
  * Route builder
  */

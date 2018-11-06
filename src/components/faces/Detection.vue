@@ -221,7 +221,7 @@ export default {
   #facesImage {
     position: absolute;
     top: 0;
-    left: 0;
+    left: 0; 
   }
   div#facesContainer {
     position: absolute;
