@@ -1,13 +1,11 @@
 <template lang="pug">
   v-container(grid-list-xl, pt-2)
     v-layout
-      v-flex(xs6)
+      v-flex(xs8)
         v-toolbar(color='primary', dark)
           v-toolbar-side-icon
           v-toolbar-title Suba una foto por favor...
           v-spacer
-          //v-btn(icon)
-            v-icon search
           v-btn.white--text(:loading='loadingBtn', :disabled='loadingBtn', color='info', @click="analizeImage()", v-if="!swBtnUploadAnalize")
             | Analizar Imagen
             v-icon(right='', dark='') cloud_upload
@@ -16,7 +14,7 @@
             v-icon(right='', dark='') cloud_upload
 
         v-card
-          v-container
+          v-container(v-if="swBtnUploadAnalize")
             v-layout(row, wrap)
               v-flex(xs12, v-if="!imagesRevision.length > 0")
                 #drop(@drop='handleDrop', @click='handleDrop', @dragover='handleDragover', @dragenter='handleDragover') Click o Arrastre Aqui (jpg, png, jpeg)
@@ -27,18 +25,37 @@
                       v-img(:src="imagen.file", width="100%", height="100%")
                       v-btn(absolute small dark fab top right, color='red', style='margin: 20px -10px 0px 0px;', @click="removeElement(imagen.id)")
                         v-icon close
-      v-flex(xs6)
+          v-container(v-else)
+            v-layout(row, wrap)
+              v-flex(xs12)
+                div#facesMain
+                  img#facesImage(:src="imageUrl")
+                  div#facesContainer
+                    div.facePosition(v-for='item in items', v-model='item.active', :key='item.title', :style="makeStyle(item.coordinates)") {{ item.title }}
+      v-flex(xs4)
         v-toolbar(color='primary', dark)
           v-toolbar-side-icon
           v-toolbar-title Info
           v-spacer
           v-btn(icon)
             v-icon search
-        v-card
-          v-container
-            v-layout(row, wrap)
-              v-flex(xs12)
-                | Listen to your favorite artists and albums whenever and wherever, online and offline.
+        v-layout(row, wrap)
+          v-flex(xs12)
+            v-card
+              v-list(two-line)
+                v-list-group(v-for='item in items', v-model='item.active', :key='item.title', :prepend-icon='item.icon', no-action)
+                  v-list-tile(slot='activator')
+                    v-list-tile-content
+                      v-list-tile-title {{ item.title }}
+                  v-list-tile(v-for='subItem in item.items', :key='subItem.title', @click)
+                    //v-list-tile-avatar
+                      img(:src="subItem.avatar")
+                    v-list-tile-content
+                      v-list-tile-title {{ subItem.title }}
+                      v-list-tile-sub-title {{ subItem.subtitle }}
+                    v-list-tile-action
+                      v-icon {{ subItem.action }}
+
 </template>
 
 <script>
@@ -52,7 +69,9 @@ export default {
       loadingBtn: false,
       loadingBtnUpload: false,
       swBtnUploadAnalize: true,
-      imageUrl: ''
+      // imageUrl: 'http://tarjetas.miteleferico.bo/uploads/faces/20181106_084820167545762.jpg',
+      imageUrl: null,
+      items: []
     }
   },
   methods: {
@@ -131,12 +150,40 @@ export default {
     },
     analizeImage(path){
       http.detection(this.imageUrl).then(res => {
-        console.log('detect::::::::::::')
-        console.log(res)
+        res.data.images.forEach(function (element) {
+          console.log(element.faces)
+          element.faces.forEach(function (subelement) {
+            console.log(subelement.attributes)
+            let temp = {
+              icon: 'face',
+              title: subelement.face_id,
+              coordinates: { 
+                topLeftX: subelement.topLeftX, 
+                topLeftY: subelement.topLeftY, 
+                width: subelement.width, 
+                height: subelement.height, 
+                quality: subelement.quality
+              },
+              items: [
+                { avatar: '', title: 'Edad aproximada', subtitle: `${subelement.attributes.age} años` },
+                { avatar: '', title: 'Genero', subtitle: subelement.attributes.gender.type },
+                { avatar: '', title: 'Lentes', subtitle: subelement.attributes.glasses },
+                { avatar: '', title: 'Rasgos Raciales', subtitle: `Asiatico: ${Number((subelement.attributes.asian).toFixed(2))} - 
+                  Negro: ${Number((subelement.attributes.black).toFixed(2))} - Hispano: ${Number((subelement.attributes.hispanic).toFixed(2))}
+                   - Blanco: ${Number((subelement.attributes.white).toFixed(2))}` }
+              ]
+            }
+          this.items.push(temp)
+          
+          }, this)
+        }, this)
       }, (error) => {
         this.error = true
         console.log(error)
       })
+    },
+    makeStyle (coordinate) {
+      return `width: ${coordinate.width}px; height: ${coordinate.height}px; top: ${coordinate.topLeftY}px; left: ${coordinate.topLeftX}px;`
     }
   }
 }
@@ -164,5 +211,32 @@ export default {
     width: 100%;
     height: 100%;
     opacity: 0;
+  }
+  div#facesMain {
+    position: relative;
+    float: left;
+    width: 800px;
+    height: 100%;
+  }
+  #facesImage {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  div#facesContainer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 2;
+  }
+  div.facePosition {
+    border: 2px solid #990000;
+    position: absolute;
+    color: #990000;
+    font-size: 20px;
+    font-weight: bold;
+    padding-left: 5px;
   }
 </style>

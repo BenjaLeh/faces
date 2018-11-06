@@ -16,7 +16,7 @@ function headers () {
 
 http.detection = function (image) {
   headers()
-  const params = `image=${image}`
+  const params = `{"image":"${image}"}`
   return http.post('detect', params)
 }
 
