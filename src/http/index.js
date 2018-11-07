@@ -20,4 +20,29 @@ http.detection = function (image) {
   return http.post('detect', params)
 }
 
+http.galleryList = function (name) {
+  headers()
+  const params = `{"gallery_name":"${name}"}`
+  return http.post('gallery/view', params)
+}
+
+http.galleryEnroll = function (image, id, gallery) {
+  headers()
+  const params = `{
+    "image":"${image}",
+    "subject_id":"${id}",
+    "gallery_name":"${gallery}"
+  }`
+  return http.post('enroll', params)
+}
+
+http.recognize = function (image, gallery) {
+  headers()
+  const params = `{
+    "image":"${image}",
+    "gallery_name":"${gallery}"
+  }`
+  return http.post('recognize', params)
+}
+
 export default http

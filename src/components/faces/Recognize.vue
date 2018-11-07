@@ -31,32 +31,35 @@
                 div#facesMain
                   img#facesImage(:src="imageUrl")
                   div#facesContainer
-                    div.facePosition(v-for='item in items', v-model='item.active', :key='item.title', :style="makeStyle(item.coordinates)") {{ item.title }}
+                    div.facePosition(v-for='item in items', v-model='item.active', :key='item.id', :style="makeStyle(item.coordinates)") {{ item.title }}
       v-flex(xs4)
         v-toolbar(color='primary', dark)
           v-toolbar-side-icon
           v-toolbar-title Info
           v-spacer
-          //v-btn(icon)
+          v-btn(icon)
             v-icon search
-          v-btn(flat, icon, @click.native='showList = !showList')
-            v-icon(v-html="showList ? 'visibility' : 'visibility_off'")
-        v-layout(row, wrap, v-if="showList")
+        v-layout(row, wrap)
           v-flex(xs12)
             v-card
+              //v-list
+                template(v-for='item in items')
+                  v-list-tile(:key='item.id', avatar, @click)
+                    v-list-tile-avatar(v-if="item.status === 'success'")
+                      img(:src='item.avatar')
+                    v-list-tile-avatar(v-else)
+                      v-icon face
+                    v-list-tile-content
+                      v-list-tile-title(v-html='item.title')
               v-list
-                v-list-group(v-for='item in items', v-model='item.active', :key='item.title', :prepend-icon='item.icon', no-action)
-                  v-list-tile(slot='activator')
+                template(v-for='item in items')
+                  v-list-tile(:key='item.id', avatar, v-if="item.status === 'success'")
+                    v-list-tile-avatar
+                      img(:src='item.avatar')
+                    v-list-tile-avatar
+                      v-icon face
                     v-list-tile-content
-                      v-list-tile-title {{ item.title }}
-                  v-list-tile(v-for='subItem in item.items', :key='subItem.title', @click)
-                    //v-list-tile-avatar
-                      img(:src="subItem.avatar")
-                    v-list-tile-content
-                      v-list-tile-title {{ subItem.title }}
-                      v-list-tile-sub-title {{ subItem.subtitle }}
-                    v-list-tile-action
-                      v-icon {{ subItem.action }}
+                      v-list-tile-title(v-html='item.title')
 
 </template>
 
@@ -67,12 +70,10 @@ export default {
   name: 'detection',
   data () {
     return {
-      showList: true,
       imagesRevision: [],
       loadingBtn: false,
       loadingBtnUpload: false,
       swBtnUploadAnalize: true,
-      // imageUrl: 'http://tarjetas.miteleferico.bo/uploads/faces/20181106_084820167545762.jpg',
       imageUrl: null,
       items: []
     }
@@ -152,34 +153,45 @@ export default {
     },
     analizeImage(path){
       this.loadingBtn = true
-      http.detection(this.imageUrl).then(res => {
+      http.recognize(this.imageUrl, 'gge').then(res => {
+        this.loadingBtn = false
         res.data.images.forEach(function (element) {
-          this.loadingBtn = false
-          console.log(element.faces)
-          element.faces.forEach(function (subelement) {
-            console.log(subelement.attributes)
+          if (element.transaction.status === 'success') { // existe coincidencia
             let temp = {
+              id: element.transaction.face_id,
+              status: element.transaction.status,
               icon: 'face',
-              title: subelement.face_id,
+              title: element.transaction.subject_id,
+              avatar: `http://rrhh.miteleferico.bo/images/personal/${element.transaction.subject_id}.jpg`,
               coordinates: { 
-                topLeftX: subelement.topLeftX, 
-                topLeftY: subelement.topLeftY, 
-                width: subelement.width, 
-                height: subelement.height, 
-                quality: subelement.quality
+                topLeftX: element.transaction.topLeftX, 
+                topLeftY: element.transaction.topLeftY, 
+                width: element.transaction.width, 
+                height: element.transaction.height, 
+                quality: element.transaction.quality,
+                status: element.transaction.status
               },
-              items: [
-                { avatar: '', title: 'Edad aproximada', subtitle: `${subelement.attributes.age} años` },
-                { avatar: '', title: 'Genero', subtitle: subelement.attributes.gender.type },
-                { avatar: '', title: 'Lentes', subtitle: subelement.attributes.glasses },
-                { avatar: '', title: 'Rasgos Raciales', subtitle: `Asiatico: ${Number((subelement.attributes.asian).toFixed(2))} - 
-                  Negro: ${Number((subelement.attributes.black).toFixed(2))} - Hispano: ${Number((subelement.attributes.hispanic).toFixed(2))}
-                   - Blanco: ${Number((subelement.attributes.white).toFixed(2))}` }
-              ]
+              items: []
             }
-          this.items.push(temp)
-          
-          }, this)
+            this.items.push(temp)
+          } else { // No existe coincidencia
+            let temp = {
+              id: element.transaction.face_id,
+              status: element.transaction.status,
+              icon: 'mood_bad',
+              title: 'Desconocido',
+              coordinates: { 
+                topLeftX: element.transaction.topLeftX, 
+                topLeftY: element.transaction.topLeftY, 
+                width: element.transaction.width, 
+                height: element.transaction.height, 
+                quality: element.transaction.quality,
+                status: element.transaction.status
+              },
+              items: []
+            }
+            this.items.push(temp)
+          }
         }, this)
       }, (error) => {
         this.error = true
@@ -187,7 +199,14 @@ export default {
       })
     },
     makeStyle (coordinate) {
-      return `width: ${coordinate.width}px; height: ${coordinate.height}px; top: ${coordinate.topLeftY}px; left: ${coordinate.topLeftX}px;`
+      let color = ''
+      if (coordinate.status === 'success')  {
+        color = '4CAF50'
+      } else {
+        color = '990000'
+      }
+      return `width: ${coordinate.width}px; height: ${coordinate.height}px; top: ${coordinate.topLeftY}px; 
+      left: ${coordinate.topLeftX}px; border: 2px solid #${color}; color: #${color};`
     }
   }
 }
@@ -236,9 +255,7 @@ export default {
     z-index: 2;
   }
   div.facePosition {
-    border: 2px solid #990000;
     position: absolute;
-    color: #990000;
     font-size: 20px;
     font-weight: bold;
     padding-left: 5px;

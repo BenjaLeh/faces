@@ -7,6 +7,8 @@ import { Component } from 'vue-router/types/router';
 
 // Faces
 import Detection from './components/faces/Detection.vue'
+import Gallery from './components/faces/Gallery.vue'
+import Recognize from './components/faces/Recognize.vue'
 
 Vue.use(Router)
 
@@ -20,7 +22,9 @@ export default new Router({
     /* Routes WITH Layout */
     route('/', null, Main, [
       route('/about', 'about', About, null),
-      route('/detection', 'detection', Detection, null)
+      route('/detection', 'detection', Detection, null),
+      route('/gallery', 'gallery', Gallery, null),
+      route('/recognize', 'recognize', Recognize, null)
     ])
   ]
 })

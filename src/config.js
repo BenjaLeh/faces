@@ -2,7 +2,8 @@ const configService = {
   menu: [
     { icon: 'home', href: '/', text: 'Inicio', active: true },
     { icon: 'home', href: '/detection', text: 'Detección' },
-    { icon: 'home', href: '/detection', text: 'Detección 2' },
+    { icon: 'home', href: '/gallery', text: 'Gallery' },
+    { icon: 'home', href: '/recognize', text: 'Recognize' },
     {
       icon: 'keyboard_arrow_up',
       'icon-alt': 'keyboard_arrow_down',
